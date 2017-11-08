@@ -1522,6 +1522,10 @@ bool QuicConnection::CanWrite(HasRetransmittableData retransmittable) {
   return true;
 }
 
+void QuicConnection::UpdateTargetIP(QuicIpAddress&& address, uint16_t port) {
+  peer_address_ = QuicSocketAddress(address, port);
+}
+
 bool QuicConnection::WritePacket(SerializedPacket* packet) {
   if (packet->packet_number < sent_packet_manager_.GetLargestSentPacket()) {
     QUIC_BUG << "Attempt to write packet:" << packet->packet_number
@@ -1579,6 +1583,7 @@ bool QuicConnection::WritePacket(SerializedPacket* packet) {
   // min_rtt_, especially in cases where the thread blocks or gets swapped out
   // during the WritePacket below.
   QuicTime packet_send_time = clock_->Now();
+  DVLOG(1) << ENDPOINT << "Write to: " << peer_address().ToString();
   WriteResult result = writer_->WritePacket(
       packet->encrypted_buffer, encrypted_length, self_address().host(),
       peer_address(), per_packet_options_);

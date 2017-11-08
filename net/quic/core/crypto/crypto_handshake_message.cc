@@ -364,6 +364,7 @@ string CryptoHandshakeMessage::DebugStringInternal(
           done = true;
         }
         break;
+      case kASAD:
       case kCADR:
         // IP address and port
         if (!it->second.empty()) {

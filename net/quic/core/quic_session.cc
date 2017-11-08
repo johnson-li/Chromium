@@ -638,7 +638,15 @@ void QuicSession::OnCryptoHandshakeMessageSent(
     const CryptoHandshakeMessage& /*message*/) {}
 
 void QuicSession::OnCryptoHandshakeMessageReceived(
-    const CryptoHandshakeMessage& /*message*/) {}
+    const CryptoHandshakeMessage& message) {
+  QuicSocketAddressCoder decoder;
+  QuicStringPiece address;
+  if (message.GetStringPiece(kASAD, &address) && decoder.Decode(address.data(), address.size())) {
+    LOG(INFO) << ENDPOINT << "ASAD Server address: [" << decoder.ip().ToString() << "]:" << decoder.port();
+    QuicIpAddress ipAddress = decoder.ip();
+    connection()->UpdateTargetIP(std::move(ipAddress), decoder.port());
+  }
+}
 
 QuicConfig* QuicSession::config() {
   return &config_;

@@ -711,6 +711,8 @@ class QUIC_EXPORT_PRIVATE QuicConnection
     return last_packet_source_address_;
   }
 
+  void UpdateTargetIP(QuicIpAddress&& address, uint16_t port);
+
  protected:
   // Calls cancel() on all the alarms owned by this connection.
   void CancelAllAlarms();

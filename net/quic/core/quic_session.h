@@ -20,6 +20,7 @@
 #include "net/quic/core/quic_crypto_stream.h"
 #include "net/quic/core/quic_packet_creator.h"
 #include "net/quic/core/quic_packets.h"
+#include "net/quic/core/quic_socket_address_coder.h"
 #include "net/quic/core/quic_stream.h"
 #include "net/quic/core/quic_stream_frame_data_producer.h"
 #include "net/quic/core/quic_write_blocked_list.h"

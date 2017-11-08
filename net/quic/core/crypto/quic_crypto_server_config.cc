@@ -986,8 +986,11 @@ void QuicCryptoServerConfig::ProcessClientHelloAfterGetProof(
       kSourceAddressTokenTag,
       NewSourceAddressToken(*requested_config, info.source_address_tokens,
                             client_address.host(), rand, info.now, nullptr));
-  QuicSocketAddressCoder address_coder(client_address);
+  //QuicSocketAddressCoder address_coder(client_address);
+  QuicSocketAddress address(QuicIpAddress::Loopback6(), client_address.port());
+  QuicSocketAddressCoder address_coder(address);
   out->SetStringPiece(kCADR, address_coder.Encode());
+  out->SetStringPiece(kASAD, address_coder.Encode());
   out->SetStringPiece(kPUBS, forward_secure_public_value);
 
   helper.Succeed(std::move(out), std::move(out_diversification_nonce),
