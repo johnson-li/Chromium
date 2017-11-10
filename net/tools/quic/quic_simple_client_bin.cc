@@ -134,6 +134,10 @@ class FakeProofVerifier : public ProofVerifier {
   }
 };
 
+string getHashedIP(string url) {
+  return "2001:da81:abcd::2";
+}
+
 int main(int argc, char* argv[]) {
   base::CommandLine::Init(argc, argv);
   base::CommandLine* line = base::CommandLine::ForCurrentProcess();
@@ -226,7 +230,8 @@ int main(int argc, char* argv[]) {
   net::QuicIpAddress ip_addr;
 
   GURL url(urls[0]);
-  string host = FLAGS_host;
+  //string host = FLAGS_host;
+  string host = getHashedIP(urls[0]);
   if (host.empty()) {
     host = url.host();
   }
