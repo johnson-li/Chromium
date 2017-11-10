@@ -263,6 +263,7 @@ QuicConnection::QuicConnection(
           kNack),
       version_negotiation_state_(START_NEGOTIATION),
       perspective_(perspective),
+      disable_migration_(false),
       connected_(true),
       can_truncate_connection_ids_(true),
       mtu_discovery_target_(0),
@@ -641,22 +642,25 @@ bool QuicConnection::OnPacketHeader(const QuicPacketHeader& header) {
     return false;
   }
 
+  QUIC_DLOG(INFO) << ENDPOINT << "Received packet header from" << last_packet_source_address_.ToString();
   PeerAddressChangeType peer_migration_type =
       QuicUtils::DetermineAddressChangeType(peer_address_,
                                             last_packet_source_address_);
   // Initiate connection migration if a non-reordered packet is received from a
   // new address.
-  if (header.packet_number > received_packet_manager_.GetLargestObserved() &&
-      peer_migration_type != NO_CHANGE) {
-    if (perspective_ == Perspective::IS_CLIENT) {
-      QUIC_DLOG(INFO) << ENDPOINT << "Peer's ip:port changed from "
-                      << peer_address_.ToString() << " to "
-                      << last_packet_source_address_.ToString();
-      peer_address_ = last_packet_source_address_;
-    } else if (active_peer_migration_type_ == NO_CHANGE) {
-      // Only migrate connection to a new peer address if there is no
-      // pending change underway.
-      StartPeerMigration(peer_migration_type);
+  if (!disable_migration_) {
+    if (header.packet_number > received_packet_manager_.GetLargestObserved() &&
+        peer_migration_type != NO_CHANGE) {
+      if (perspective_ == Perspective::IS_CLIENT) {
+        QUIC_DLOG(INFO) << ENDPOINT << "Peer's ip:port changed from "
+                        << peer_address_.ToString() << " to "
+                        << last_packet_source_address_.ToString();
+        peer_address_ = last_packet_source_address_;
+      } else if (active_peer_migration_type_ == NO_CHANGE) {
+        // Only migrate connection to a new peer address if there is no
+        // pending change underway.
+        StartPeerMigration(peer_migration_type);
+      }
     }
   }
 
@@ -1524,6 +1528,7 @@ bool QuicConnection::CanWrite(HasRetransmittableData retransmittable) {
 
 void QuicConnection::UpdateTargetIP(QuicIpAddress&& address, uint16_t port) {
   peer_address_ = QuicSocketAddress(address, port);
+  disable_migration_ = true;
 }
 
 bool QuicConnection::WritePacket(SerializedPacket* packet) {

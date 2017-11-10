@@ -176,6 +176,7 @@ void QuicSimpleServer::StartReading() {
     return;
   }
 
+  LOG(INFO) << "Got message from " << client_address_.ToString();
   if (++synchronous_read_count_ > 32) {
     synchronous_read_count_ = 0;
     // Schedule the processing through the message loop to 1) prevent infinite
@@ -189,6 +190,7 @@ void QuicSimpleServer::StartReading() {
 }
 
 void QuicSimpleServer::OnReadComplete(int result) {
+  LOG(INFO) << "Got message from " << client_address_.ToString();
   read_pending_ = false;
   if (result == 0)
     result = ERR_CONNECTION_CLOSED;

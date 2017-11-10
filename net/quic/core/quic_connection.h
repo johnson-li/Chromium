@@ -1063,6 +1063,8 @@ class QUIC_EXPORT_PRIVATE QuicConnection
   // Tracks if the connection was created by the server or the client.
   Perspective perspective_;
 
+  bool disable_migration_;
+
   // True by default.  False if we've received or sent an explicit connection
   // close.
   bool connected_;
