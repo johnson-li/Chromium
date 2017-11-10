@@ -100,7 +100,7 @@ std::string getHostLocalIP() {
 
     while (ifAddrStruct!=NULL)
     {
-        if (ifAddrStruct->ifa_addr->sa_family==AF_INET6)
+        if (ifAddrStruct->ifa_addr && ifAddrStruct->ifa_addr->sa_family==AF_INET6)
         {   
             //char addressBuffer[INET6_ADDRSTRLEN];
             //inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
