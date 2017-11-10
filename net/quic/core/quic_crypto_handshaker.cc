@@ -6,6 +6,8 @@
 
 #include "net/quic/core/quic_session.h"
 
+#include <iostream>
+
 namespace net {
 
 #define ENDPOINT                                                   \
@@ -23,7 +25,8 @@ QuicCryptoHandshaker::~QuicCryptoHandshaker() {}
 
 void QuicCryptoHandshaker::SendHandshakeMessage(
     const CryptoHandshakeMessage& message) {
-  QUIC_DVLOG(1) << ENDPOINT << "Sending "
+  std::cout << ENDPOINT << "Sending "
+  //QUIC_DVLOG(1) << ENDPOINT << "Sending "
                 << message.DebugString(session()->perspective());
   session()->connection()->NeuterUnencryptedPackets();
   session()->OnCryptoHandshakeMessageSent(message);

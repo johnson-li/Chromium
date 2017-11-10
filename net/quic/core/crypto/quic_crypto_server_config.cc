@@ -9,6 +9,28 @@
 #include <algorithm>
 #include <memory>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <string>
+#include <iostream>
+
 #include "base/macros.h"
 #include "crypto/hkdf.h"
 #include "net/quic/core/crypto/aes_128_gcm_12_decrypter.h"
@@ -63,6 +85,38 @@ string DeriveSourceAddressTokenKey(
       "QUIC source address token key", CryptoSecretBoxer::GetKeySize(),
       0 /* no fixed IV needed */, 0 /* no subkey secret */);
   return hkdf.server_write_key().as_string();
+}
+
+std::string getHostLocalIP() {
+    struct ifaddrs * ifAddrStruct=NULL;
+    uint8_t * tmpAddrPtr=NULL;
+    uint16_t address_family = 10;
+    //uint16_t hostPort;
+    string serialized;
+    serialized.append(reinterpret_cast<const char*>(&address_family),
+                    sizeof(address_family));
+
+    getifaddrs(&ifAddrStruct);
+
+    while (ifAddrStruct!=NULL)
+    {
+        if (ifAddrStruct->ifa_addr->sa_family==AF_INET6)
+        {   
+            //char addressBuffer[INET6_ADDRSTRLEN];
+            //inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+            if ((std::string(ifAddrStruct->ifa_name) == "eth0") || (std::string(ifAddrStruct->ifa_name) == "en0")) {
+                tmpAddrPtr=reinterpret_cast<uint8_t*>(&((struct sockaddr_in6 *)ifAddrStruct->ifa_addr)->sin6_addr);
+                IPAddress hostIP = IPAddress(tmpAddrPtr[0], tmpAddrPtr[1], tmpAddrPtr[2], tmpAddrPtr[3], tmpAddrPtr[4], tmpAddrPtr[5],
+                  tmpAddrPtr[6], tmpAddrPtr[7], tmpAddrPtr[8], tmpAddrPtr[9], tmpAddrPtr[10], tmpAddrPtr[11], tmpAddrPtr[12],
+                  tmpAddrPtr[13], tmpAddrPtr[14], tmpAddrPtr[15]);
+                serialized.append(IPAddressToPackedString(hostIP));
+                //hostPort = *(reinterpret_cast<uint16_t*>(&((struct sockaddr_in6 *)ifAddrStruct->ifa_addr)->sin6_port));
+                return serialized;
+            }
+        }
+        ifAddrStruct = ifAddrStruct->ifa_next;
+    }
+    return string("0.0.0.0");
 }
 
 }  // namespace
@@ -528,6 +582,7 @@ class QuicCryptoServerConfig::ProcessClientHelloCallback
       bool reject_only,
       QuicConnectionId connection_id,
       const QuicSocketAddress& client_address,
+      //const QuicSocketAddress& server_address,
       QuicTransportVersion version,
       const QuicTransportVersionVector& supported_versions,
       bool use_stateless_rejects,
@@ -549,6 +604,7 @@ class QuicCryptoServerConfig::ProcessClientHelloCallback
         reject_only_(reject_only),
         connection_id_(connection_id),
         client_address_(client_address),
+        //server_address_(server_address),
         version_(version),
         supported_versions_(supported_versions),
         use_stateless_rejects_(use_stateless_rejects),
@@ -728,6 +784,7 @@ void QuicCryptoServerConfig::ProcessClientHelloAfterGetProof(
     bool reject_only,
     QuicConnectionId connection_id,
     const QuicSocketAddress& client_address,
+    //const QuicSocketAddress& server_address,
     QuicTransportVersion version,
     const QuicTransportVersionVector& supported_versions,
     bool use_stateless_rejects,
@@ -990,7 +1047,8 @@ void QuicCryptoServerConfig::ProcessClientHelloAfterGetProof(
   QuicSocketAddress address(QuicIpAddress::Loopback6(), client_address.port());
   QuicSocketAddressCoder address_coder(address);
   out->SetStringPiece(kCADR, address_coder.Encode());
-  out->SetStringPiece(kASAD, address_coder.Encode());
+  uint16_t hostPort = 8443;
+  out->SetStringPiece(kASAD, getHostLocalIP().append(reinterpret_cast<const char*>(&hostPort), sizeof(hostPort)));
   out->SetStringPiece(kPUBS, forward_secure_public_value);
 
   helper.Succeed(std::move(out), std::move(out_diversification_nonce),

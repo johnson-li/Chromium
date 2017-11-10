@@ -528,6 +528,7 @@ class QUIC_EXPORT_PRIVATE QuicCryptoServerConfig {
       bool reject_only,
       QuicConnectionId connection_id,
       const QuicSocketAddress& client_address,
+      //const QuicSocketAddress& server_address,
       QuicTransportVersion version,
       const QuicTransportVersionVector& supported_versions,
       bool use_stateless_rejects,
