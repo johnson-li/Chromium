@@ -43,6 +43,7 @@
 #include "base/at_exit.h"
 #include "base/command_line.h"
 #include "base/logging.h"
+#include "base/md5.h"
 #include "base/message_loop/message_loop.h"
 #include "net/base/net_errors.h"
 #include "net/base/privacy_mode.h"
@@ -134,8 +135,20 @@ class FakeProofVerifier : public ProofVerifier {
   }
 };
 
-string getHashedIP(string url) {
-  return "2001:da81:abcd::2";
+string getHashedIP(string hostName) {
+  base::MD5Digest md5Digest;
+  base::MD5Sum(hostName.data(), hostName.length(), &md5Digest);
+  uint8_t a[8];
+  for (int i = 0; i < 8; ++i) {
+    a[i] = md5Digest.a[i] ^ md5Digest.a[i + 8];
+  }
+  std::ostringstream stream;
+  stream << "2600:1f16:f11:e102:7a";
+  stream << std::hex << a[6];
+  for (int i = 0; i < 3; i++) {
+    stream << ":" << std::hex << a[5-i*2] << std::hex << a[4-i*2];
+  }
+  return stream.str();
 }
 
 int main(int argc, char* argv[]) {
@@ -230,8 +243,9 @@ int main(int argc, char* argv[]) {
   net::QuicIpAddress ip_addr;
 
   GURL url(urls[0]);
-  //string host = FLAGS_host;
-  string host = getHashedIP(urls[0]);
+  string host = FLAGS_host;
+  string hashedIP = getHashedIP(urls[0]);
+  VLOG(1) << "Hashed IP: " << hashedIP << endl;
   if (host.empty()) {
     host = url.host();
   }
