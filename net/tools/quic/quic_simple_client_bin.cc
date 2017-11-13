@@ -136,17 +136,20 @@ class FakeProofVerifier : public ProofVerifier {
 };
 
 string getHashedIP(string hostName) {
+  VLOG(1) << "Host Name: " << hostName << endl;
   base::MD5Digest md5Digest;
   base::MD5Sum(hostName.data(), hostName.length(), &md5Digest);
+  VLOG(1) << "MD5: " << base::MD5String(hostName);
+  std::cout << std::hex << 0xff << std::endl;
   uint8_t a[8];
   for (int i = 0; i < 8; ++i) {
     a[i] = md5Digest.a[i] ^ md5Digest.a[i + 8];
   }
   std::ostringstream stream;
   stream << "2600:1f16:f11:e102:7a";
-  stream << std::hex << a[6];
+  stream << std::hex << (int) a[1];
   for (int i = 0; i < 3; i++) {
-    stream << ":" << std::hex << a[5-i*2] << std::hex << a[4-i*2];
+    stream << ":" << std::hex << (int) a[i*2 + 2] << std::hex << (int) a[1+i*2 + 2];
   }
   return stream.str();
 }
@@ -244,11 +247,12 @@ int main(int argc, char* argv[]) {
 
   GURL url(urls[0]);
   string host = FLAGS_host;
-  string hashedIP = getHashedIP(urls[0]);
-  VLOG(1) << "Hashed IP: " << hashedIP << endl;
   if (host.empty()) {
+    VLOG(1) << "host is empty";
     host = url.host();
   }
+  string hashedIP = getHashedIP(host);
+  VLOG(1) << "Hashed IP: " << hashedIP;
   int port = FLAGS_port;
   if (port == 0) {
     port = url.EffectiveIntPort();
