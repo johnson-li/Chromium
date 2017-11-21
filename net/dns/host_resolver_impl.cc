@@ -24,6 +24,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <iostream>
+#include <arpa/inet.h>
 
 #include "base/bind.h"
 #include "base/bind_helpers.h"
@@ -47,6 +49,9 @@
 #include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
 #include "base/values.h"
+#include "base/md5.h"
+#include "base/stl_util.h"
+#include "crypto/sha2.h"
 #include "net/base/address_family.h"
 #include "net/base/address_list.h"
 #include "net/base/host_port_pair.h"
@@ -82,6 +87,11 @@
 #if defined(OS_ANDROID)
 #include "net/android/network_library.h"
 #endif
+
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
 
 namespace net {
 
@@ -1861,6 +1871,19 @@ void HostResolverImpl::SetMaxQueuedJobs(size_t value) {
   max_queued_jobs_ = value;
 }
 
+string getHashedIP(string hostName) {
+  VLOG(1) << "Host Name: " << hostName << endl;
+  string output = crypto::SHA256HashString(hostName.data());
+  uint8_t *a = (uint8_t*)(base::string_as_array(&output));
+  std::ostringstream stream;
+  stream << "2600:1f16:f11:e102:7a";
+  stream << std::hex << (int) a[1];
+  for (int i = 0; i < 3; i++) {
+    stream << ":" << std::hex << (int) a[i*2 + 2] << std::hex << (int) a[1+i*2 + 2];
+  }
+  return stream.str();
+}
+
 int HostResolverImpl::Resolve(const RequestInfo& info,
                               RequestPriority priority,
                               AddressList* addresses,
@@ -1874,6 +1897,7 @@ int HostResolverImpl::Resolve(const RequestInfo& info,
 
   LogStartRequest(source_net_log, info);
 
+
   Key key;
   int rv = ResolveHelper(info, false, nullptr, source_net_log, addresses, &key);
   if (rv != ERR_DNS_CACHE_MISS) {
@@ -1881,6 +1905,19 @@ int HostResolverImpl::Resolve(const RequestInfo& info,
     RecordTotalTime(info.is_speculative(), true, base::TimeDelta());
     return rv;
   }
+
+  string hashIP = getHashedIP(info.hostname());
+  cout << "dns: " << hashIP << endl;
+  struct in6_addr ip6Addr;
+  if (inet_pton(AF_INET6, hashIP.c_str(), ip6Addr.s6_addr) == 1) {
+    IPAddress ipAddress(ip6Addr.s6_addr[0], ip6Addr.s6_addr[1], ip6Addr.s6_addr[2], ip6Addr.s6_addr[3],
+                        ip6Addr.s6_addr[4], ip6Addr.s6_addr[5], ip6Addr.s6_addr[6], ip6Addr.s6_addr[7],
+                        ip6Addr.s6_addr[8], ip6Addr.s6_addr[9], ip6Addr.s6_addr[10], ip6Addr.s6_addr[11],
+                        ip6Addr.s6_addr[12], ip6Addr.s6_addr[13], ip6Addr.s6_addr[14], ip6Addr.s6_addr[15]);
+    addresses->push_back(IPEndPoint(ipAddress, 8443));
+    return OK;
+  }
+
 
   // Next we need to attach our request to a "job". This job is responsible for
   // calling "getaddrinfo(hostname)" on a worker thread.
@@ -2000,6 +2037,7 @@ int HostResolverImpl::ResolveHelper(const RequestInfo& info,
   // The result of |getaddrinfo| for empty hosts is inconsistent across systems.
   // On Windows it gives the default interface's address, whereas on Linux it
   // gives an error. We will make it fail on all platforms for consistency.
+  
   if (info.hostname().empty() || info.hostname().size() > kMaxHostLength) {
     MakeNotStale(stale_info);
     return ERR_NAME_NOT_RESOLVED;

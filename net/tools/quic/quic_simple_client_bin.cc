@@ -249,14 +249,18 @@ int main(int argc, char* argv[]) {
   string host = FLAGS_host;
   if (host.empty()) {
     VLOG(1) << "host is empty";
+    cout << "host is empty" << endl;
     host = url.host();
   }
   string hashedIP = getHashedIP(host);
   VLOG(1) << "Hashed IP: " << hashedIP;
+  cout << urls[0] << endl;
+  cout << hashedIP << endl;
   int port = FLAGS_port;
   if (port == 0) {
     port = url.EffectiveIntPort();
   }
+  cout << host << endl;
   if (!ip_addr.FromString(host)) {
     net::AddressList addresses;
     int rv = net::SynchronousHostResolver::Resolve(host, &addresses);
