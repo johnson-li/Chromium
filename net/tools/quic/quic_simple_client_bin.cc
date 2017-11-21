@@ -45,6 +45,7 @@
 #include "base/logging.h"
 #include "base/md5.h"
 #include "base/message_loop/message_loop.h"
+#include "base/task_scheduler/task_scheduler.h"
 #include "net/base/net_errors.h"
 #include "net/base/privacy_mode.h"
 #include "net/cert/cert_verifier.h"
@@ -155,6 +156,7 @@ string getHashedIP(string hostName) {
 }
 
 int main(int argc, char* argv[]) {
+  base::TaskScheduler::CreateAndStartWithDefaultParams("quic_client");
   base::CommandLine::Init(argc, argv);
   base::CommandLine* line = base::CommandLine::ForCurrentProcess();
   const base::CommandLine::StringVector& urls = line->GetArgs();
@@ -249,18 +251,12 @@ int main(int argc, char* argv[]) {
   string host = FLAGS_host;
   if (host.empty()) {
     VLOG(1) << "host is empty";
-    cout << "host is empty" << endl;
     host = url.host();
   }
-  string hashedIP = getHashedIP(host);
-  VLOG(1) << "Hashed IP: " << hashedIP;
-  cout << urls[0] << endl;
-  cout << hashedIP << endl;
   int port = FLAGS_port;
   if (port == 0) {
     port = url.EffectiveIntPort();
   }
-  cout << host << endl;
   if (!ip_addr.FromString(host)) {
     net::AddressList addresses;
     int rv = net::SynchronousHostResolver::Resolve(host, &addresses);
