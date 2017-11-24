@@ -215,7 +215,8 @@ const QuicTag kRCID = TAG('R', 'C', 'I', 'D');   // Server-designated
 // Server hello tags
 const QuicTag kCADR = TAG('C', 'A', 'D', 'R');   // Client IP address and port
 const QuicTag kASAD = TAG('A', 'S', 'A', 'D');   // Alternate Server IP address
-                                                 // and port.
+    // and port.
+const QuicTag kLTTL = TAG('L', 'T', 'T', 'L');   // TTL of service ID
 const QuicTag kSRST = TAG('S', 'R', 'S', 'T');   // Stateless reset token used
                                                  // in IETF public reset packet
 

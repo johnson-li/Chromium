@@ -1047,8 +1047,6 @@ void QuicCryptoServerConfig::ProcessClientHelloAfterGetProof(
   QuicSocketAddress address(QuicIpAddress::Loopback6(), client_address.port());
   QuicSocketAddressCoder address_coder(address);
   out->SetStringPiece(kCADR, address_coder.Encode());
-  uint16_t hostPort = 8443;
-  out->SetStringPiece(kASAD, getHostLocalIP().append(reinterpret_cast<const char*>(&hostPort), sizeof(hostPort)));
   out->SetStringPiece(kPUBS, forward_secure_public_value);
 
   helper.Succeed(std::move(out), std::move(out_diversification_nonce),
@@ -1535,6 +1533,9 @@ void QuicCryptoServerConfig::BuildRejection(
       NewSourceAddressToken(config, info.source_address_tokens, info.client_ip,
                             rand, info.now, &cached_network_params));
   out->SetValue(kSTTL, config.expiry_time.AbsoluteDifference(now).ToSeconds());
+  out->SetValue(kLTTL, config.expiry_time.AbsoluteDifference(now).ToSeconds());
+  uint16_t hostPort = 8443;
+  out->SetStringPiece(kASAD, getHostLocalIP().append(reinterpret_cast<const char*>(&hostPort), sizeof(hostPort)));
   if (replay_protection_) {
     out->SetStringPiece(kServerNonceTag, NewServerNonce(rand, info.now));
   }

@@ -190,7 +190,7 @@ void QuicSimpleServer::StartReading() {
 }
 
 void QuicSimpleServer::OnReadComplete(int result) {
-  LOG(INFO) << "Got message from " << client_address_.ToString();
+  LOG(INFO) << "Got message from " << client_address_.ToString() << ", result: " << result;
   read_pending_ = false;
   if (result == 0)
     result = ERR_CONNECTION_CLOSED;
