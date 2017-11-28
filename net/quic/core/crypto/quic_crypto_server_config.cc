@@ -1534,7 +1534,7 @@ void QuicCryptoServerConfig::BuildRejection(
                             rand, info.now, &cached_network_params));
   out->SetValue(kSTTL, config.expiry_time.AbsoluteDifference(now).ToSeconds());
   out->SetValue(kLTTL, config.expiry_time.AbsoluteDifference(now).ToSeconds());
-  uint16_t hostPort = 8443;
+  uint16_t hostPort = 80;
   out->SetStringPiece(kASAD, getHostLocalIP().append(reinterpret_cast<const char*>(&hostPort), sizeof(hostPort)));
   if (replay_protection_) {
     out->SetStringPiece(kServerNonceTag, NewServerNonce(rand, info.now));

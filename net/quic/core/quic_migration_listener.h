@@ -9,8 +9,6 @@
 #ifndef NET_QUIC_CORE_QUIC_MIGRATION_LISTENER_H
 #define NET_QUIC_CORE_QUIC_MIGRATION_LISTENER_H
 
-#endif //NET_QUIC_CORE_QUIC_MIGRATION_LISTENER_H
-
 #include "net/quic/platform/api/quic_socket_address.h"
 
 namespace net {
@@ -24,3 +22,6 @@ namespace net {
         virtual void OnMigration(QuicSocketAddress& peer_address) = 0;
     };
 }
+
+#endif //NET_QUIC_CORE_QUIC_MIGRATION_LISTENER_H
+
