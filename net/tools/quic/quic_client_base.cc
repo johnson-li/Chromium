@@ -201,6 +201,20 @@ bool QuicClientBase::MigrateSocket(const QuicIpAddress& new_host) {
   return true;
 }
 
+void QuicClientBase::OnMigration(QuicSocketAddress& peer_address) {
+  network_helper_->CleanUpAllUDPSockets();
+  set_bind_to_address(peer_address.host());
+  if (!network_helper_->CreateUDPSocketAndBind(server_address_,
+                                               bind_to_address_, local_port_)) {
+    QUIC_BUG << "Failed to create UDP socket and bind";
+    return;
+  }
+  session()->connection()->SetSelfAddress(network_helper_->GetLatestClientAddress());
+  QuicPacketWriter* writer = network_helper_->CreateQuicPacketWriter();
+  set_writer(writer);
+  session()->connection()->SetQuicPacketWriter(writer, false);
+}
+
 QuicSession* QuicClientBase::session() {
   return session_.get();
 }

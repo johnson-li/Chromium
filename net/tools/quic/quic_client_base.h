@@ -14,6 +14,7 @@
 #include "net/quic/core/crypto/crypto_handshake.h"
 #include "net/quic/core/quic_client_push_promise_index.h"
 #include "net/quic/core/quic_config.h"
+#include "net/quic/core/quic_migration_listener.h"
 #include "net/quic/platform/api/quic_socket_address.h"
 #include "net/quic/platform/api/quic_string_piece.h"
 #include "net/tools/quic/quic_spdy_client_session.h"
@@ -30,7 +31,7 @@ class QuicServerId;
 // Subclasses derived from this class are responsible for creating the
 // actual QuicSession instance, as well as defining functions that
 // create and run the underlying network transport.
-class QuicClientBase {
+class QuicClientBase : public QuicMigrationListener {
  public:
   // An interface to various network events that the QuicClient will need to
   // interact with.
@@ -86,6 +87,8 @@ class QuicClientBase {
   // initialization needs to be done. Subclasses should expect that session()
   // is non-null and valid.
   virtual void InitializeSession();
+
+  virtual void OnMigration(QuicSocketAddress& peer_address);
 
   // Disconnects from the QUIC server.
   void Disconnect();

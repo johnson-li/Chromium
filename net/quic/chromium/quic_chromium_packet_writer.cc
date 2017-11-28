@@ -83,6 +83,7 @@ WriteResult QuicChromiumPacketWriter::WritePacket(
     const QuicIpAddress& self_address,
     const QuicSocketAddress& peer_address,
     PerPacketOptions* /*options*/) {
+  DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
   DCHECK(!IsWriteBlocked());
   SetPacket(buffer, buf_len);
   return WritePacketToSocketImpl();

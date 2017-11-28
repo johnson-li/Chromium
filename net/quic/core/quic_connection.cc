@@ -170,6 +170,22 @@ class MtuDiscoveryAlarmDelegate : public QuicAlarm::Delegate {
 #define ENDPOINT \
   (perspective_ == Perspective::IS_SERVER ? "Server: " : "Client: ")
 
+
+QuicConnection::QuicConnection(
+    QuicConnectionId connection_id,
+    QuicSocketAddress address,
+    QuicConnectionHelperInterface* helper,
+    QuicAlarmFactory* alarm_factory,
+    QuicPacketWriter* writer,
+    bool owns_writer,
+    Perspective perspective,
+    const QuicTransportVersionVector& supported_versions,
+    QuicMigrationListener* migration_listener) : QuicConnection::QuicConnection(connection_id,
+      address, helper, alarm_factory, writer, owns_writer, perspective,
+      supported_versions, migration_listener), migration_listener_(migration_listener) {
+    DVLOG(1) << "Use new Quic connection constructor";
+}
+
 QuicConnection::QuicConnection(
     QuicConnectionId connection_id,
     QuicSocketAddress address,
@@ -1527,8 +1543,14 @@ bool QuicConnection::CanWrite(HasRetransmittableData retransmittable) {
 }
 
 void QuicConnection::UpdateTargetIP(QuicIpAddress&& address, uint16_t port) {
-  peer_address_ = QuicSocketAddress(address, port);
-  disable_migration_ = true;
+//  peer_address_ = QuicSocketAddress(address, port);
+  if (migration_listener_) {
+      QuicSocketAddress socket_address(address, port);
+    migration_listener_->OnMigration(socket_address);
+    disable_migration_ = true;
+  } else {
+    QUIC_BUG << "migration listener is null";
+  }
 }
 
 bool QuicConnection::WritePacket(SerializedPacket* packet) {
