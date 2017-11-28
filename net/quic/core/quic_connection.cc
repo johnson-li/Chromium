@@ -179,11 +179,10 @@ QuicConnection::QuicConnection(
     QuicPacketWriter* writer,
     bool owns_writer,
     Perspective perspective,
-    const QuicTransportVersionVector& supported_versions,
-    QuicMigrationListener* migration_listener) : QuicConnection::QuicConnection(connection_id,
+    const QuicTransportVersionVector& supported_versions) :
+      QuicConnection::QuicConnection(connection_id,
       address, helper, alarm_factory, writer, owns_writer, perspective,
-      supported_versions, migration_listener), migration_listener_(migration_listener) {
-    DVLOG(1) << "Use new Quic connection constructor";
+      supported_versions, nullptr) {
 }
 
 QuicConnection::QuicConnection(
@@ -194,7 +193,8 @@ QuicConnection::QuicConnection(
     QuicPacketWriter* writer,
     bool owns_writer,
     Perspective perspective,
-    const QuicTransportVersionVector& supported_versions)
+    const QuicTransportVersionVector& supported_versions,
+    QuicMigrationListener* migration_listener)
     : framer_(supported_versions,
               helper->GetClock()->ApproximateNow(),
               perspective),
@@ -208,6 +208,7 @@ QuicConnection::QuicConnection(
       random_generator_(helper->GetRandomGenerator()),
       connection_id_(connection_id),
       peer_address_(address),
+      migration_listener_(migration_listener),
       active_peer_migration_type_(NO_CHANGE),
       highest_packet_sent_before_peer_migration_(0),
       last_packet_decrypted_(false),
