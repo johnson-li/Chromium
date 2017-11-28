@@ -1876,7 +1876,8 @@ string getHashedIP(string hostName) {
   string output = crypto::SHA256HashString(hostName.data());
   uint8_t *a = (uint8_t*)(base::string_as_array(&output));
   std::ostringstream stream;
-  stream << "2600:1f16:f11:e102:7a";
+  //stream << "2600:1f16:f11:e102:7a";
+  stream << "2001:da81:abcd::";
   stream << std::hex << (int) a[0];
   for (int i = 0; i < 3; i++) {
     stream << ":" << std::hex << (int) a[i*2 + 1] << std::hex << (int) a[i*2 + 2];
@@ -1907,6 +1908,7 @@ int HostResolverImpl::Resolve(const RequestInfo& info,
   }
 
   string hashIP = getHashedIP(info.hostname());
+  VLOG(1) << "Hashed IP: " << hashIP;
   struct in6_addr ip6Addr;
   if (inet_pton(AF_INET6, hashIP.c_str(), ip6Addr.s6_addr) == 1) {
     IPAddress ipAddress(ip6Addr.s6_addr[0], ip6Addr.s6_addr[1], ip6Addr.s6_addr[2], ip6Addr.s6_addr[3],

@@ -540,6 +540,7 @@ std::unique_ptr<QuicEncryptedPacket> QuicFramer::BuildVersionNegotiationPacket(
 
 bool QuicFramer::ProcessPacket(const QuicEncryptedPacket& packet) {
   QuicDataReader reader(packet.data(), packet.length(), endianness());
+  VLOG(1) << "QuicFramer::ProcessPacket";
 
   visitor_->OnPacket();
 
