@@ -74,6 +74,7 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket(
   scoped_refptr<StringIOBuffer> buf(
       new StringIOBuffer(std::string(buffer, buf_len)));
   DCHECK(!IsWriteBlocked());
+  DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
   int rv;
   if (buf_len <= static_cast<size_t>(std::numeric_limits<int>::max())) {
     rv = socket_->SendTo(
