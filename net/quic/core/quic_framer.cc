@@ -173,7 +173,7 @@ QuicFramer::QuicFramer(const QuicTransportVersionVector& supported_versions,
       last_timestamp_(QuicTime::Delta::Zero()),
       data_producer_(nullptr) {
   DCHECK(!supported_versions.empty());
-  transport_version_ = supported_versions_[0];
+  transport_version_ = supported_versions_[1];
   decrypter_ = QuicMakeUnique<NullDecrypter>(perspective);
   encrypter_[ENCRYPTION_NONE] = QuicMakeUnique<NullEncrypter>(perspective);
 }

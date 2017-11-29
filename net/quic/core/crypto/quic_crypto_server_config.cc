@@ -1902,8 +1902,9 @@ HandshakeFailureReason QuicCryptoServerConfig::ValidateSingleSourceAddressToken(
     const SourceAddressToken& source_address_token,
     const QuicIpAddress& ip,
     QuicWallTime now) const {
-  if (source_address_token.ip() != ip.DualStacked().ToPackedString()) {
+  if (true || source_address_token.ip() != ip.DualStacked().ToPackedString()) {
     // It's for a different IP address.
+    DVLOG(1) << "IP addresses differ: " << source_address_token.ip() << " against " << ip.DualStacked().ToPackedString() << "(" << ip.DualStacked().ToString() << ")";
     return SOURCE_ADDRESS_TOKEN_DIFFERENT_IP_ADDRESS_FAILURE;
   }
 
