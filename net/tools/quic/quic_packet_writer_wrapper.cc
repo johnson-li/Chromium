@@ -18,6 +18,7 @@ WriteResult QuicPacketWriterWrapper::WritePacket(
     const QuicIpAddress& self_address,
     const QuicSocketAddress& peer_address,
     PerPacketOptions* options) {
+  DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
   return writer_->WritePacket(buffer, buf_len, self_address, peer_address,
                               options);
 }

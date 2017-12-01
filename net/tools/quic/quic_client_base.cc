@@ -121,7 +121,7 @@ void QuicClientBase::StartConnect() {
   session_ = CreateQuicClientSession(new QuicConnection(
       GetNextConnectionId(), server_address(), helper(), alarm_factory(),
       writer,
-      /* owns_writer= */ false, Perspective::IS_CLIENT, supported_versions()));
+      /* owns_writer= */ false, Perspective::IS_CLIENT, supported_versions(), this));
   if (initial_max_packet_length_ != 0) {
     session()->connection()->SetMaxPacketLength(initial_max_packet_length_);
   }
@@ -199,6 +199,23 @@ bool QuicClientBase::MigrateSocket(const QuicIpAddress& new_host) {
   session()->connection()->SetQuicPacketWriter(writer, false);
 
   return true;
+}
+
+void QuicClientBase::OnMigration(QuicSocketAddress& peer_address) {
+  network_helper_->CleanUpAllUDPSockets();
+  //set_bind_to_address(peer_address.host());
+  set_server_address(peer_address);
+  DVLOG(1) << "Create UDP socket to: " << server_address_.ToString();
+  if (!network_helper_->CreateUDPSocketAndBind(server_address_,
+                                               bind_to_address_, local_port_)) {
+    QUIC_BUG << "Failed to create UDP socket and bind";
+    return;
+  }
+  DVLOG(1) << "Latest client address: " << network_helper_->GetLatestClientAddress().ToString();
+  session()->connection()->SetSelfAddress(network_helper_->GetLatestClientAddress());
+  QuicPacketWriter* writer = network_helper_->CreateQuicPacketWriter();
+  set_writer(writer);
+  session()->connection()->SetQuicPacketWriter(writer, false);
 }
 
 QuicSession* QuicClientBase::session() {

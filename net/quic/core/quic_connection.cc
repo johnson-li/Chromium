@@ -170,6 +170,7 @@ class MtuDiscoveryAlarmDelegate : public QuicAlarm::Delegate {
 #define ENDPOINT \
   (perspective_ == Perspective::IS_SERVER ? "Server: " : "Client: ")
 
+
 QuicConnection::QuicConnection(
     QuicConnectionId connection_id,
     QuicSocketAddress address,
@@ -178,7 +179,22 @@ QuicConnection::QuicConnection(
     QuicPacketWriter* writer,
     bool owns_writer,
     Perspective perspective,
-    const QuicTransportVersionVector& supported_versions)
+    const QuicTransportVersionVector& supported_versions) :
+      QuicConnection::QuicConnection(connection_id,
+      address, helper, alarm_factory, writer, owns_writer, perspective,
+      supported_versions, nullptr) {
+}
+
+QuicConnection::QuicConnection(
+    QuicConnectionId connection_id,
+    QuicSocketAddress address,
+    QuicConnectionHelperInterface* helper,
+    QuicAlarmFactory* alarm_factory,
+    QuicPacketWriter* writer,
+    bool owns_writer,
+    Perspective perspective,
+    const QuicTransportVersionVector& supported_versions,
+    QuicMigrationListener* migration_listener)
     : framer_(supported_versions,
               helper->GetClock()->ApproximateNow(),
               perspective),
@@ -192,6 +208,7 @@ QuicConnection::QuicConnection(
       random_generator_(helper->GetRandomGenerator()),
       connection_id_(connection_id),
       peer_address_(address),
+      migration_listener_(migration_listener),
       active_peer_migration_type_(NO_CHANGE),
       highest_packet_sent_before_peer_migration_(0),
       last_packet_decrypted_(false),
@@ -1527,8 +1544,14 @@ bool QuicConnection::CanWrite(HasRetransmittableData retransmittable) {
 }
 
 void QuicConnection::UpdateTargetIP(QuicIpAddress&& address, uint16_t port) {
-  peer_address_ = QuicSocketAddress(address, port);
-  disable_migration_ = true;
+//  peer_address_ = QuicSocketAddress(address, port);
+  if (migration_listener_) {
+      QuicSocketAddress socket_address(address, port);
+    migration_listener_->OnMigration(socket_address);
+    disable_migration_ = true;
+  } else {
+    QUIC_BUG << "migration listener is null";
+  }
 }
 
 bool QuicConnection::WritePacket(SerializedPacket* packet) {

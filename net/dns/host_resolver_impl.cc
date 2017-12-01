@@ -1915,7 +1915,7 @@ int HostResolverImpl::Resolve(const RequestInfo& info,
                         ip6Addr.s6_addr[4], ip6Addr.s6_addr[5], ip6Addr.s6_addr[6], ip6Addr.s6_addr[7],
                         ip6Addr.s6_addr[8], ip6Addr.s6_addr[9], ip6Addr.s6_addr[10], ip6Addr.s6_addr[11],
                         ip6Addr.s6_addr[12], ip6Addr.s6_addr[13], ip6Addr.s6_addr[14], ip6Addr.s6_addr[15]);
-    addresses->push_back(IPEndPoint(ipAddress, 8443));
+    addresses->push_back(IPEndPoint(ipAddress, 80));
     return OK;
   }
 

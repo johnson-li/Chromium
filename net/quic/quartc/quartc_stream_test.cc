@@ -114,6 +114,7 @@ class DummyPacketWriter : public QuicPacketWriter {
                           const QuicIpAddress& self_address,
                           const QuicSocketAddress& peer_address,
                           PerPacketOptions* options) override {
+    DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
     return WriteResult(WRITE_STATUS_ERROR, 0);
   }
 

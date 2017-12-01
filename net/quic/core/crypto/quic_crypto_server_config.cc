@@ -1534,7 +1534,7 @@ void QuicCryptoServerConfig::BuildRejection(
                             rand, info.now, &cached_network_params));
   out->SetValue(kSTTL, config.expiry_time.AbsoluteDifference(now).ToSeconds());
   out->SetValue(kLTTL, config.expiry_time.AbsoluteDifference(now).ToSeconds());
-  uint16_t hostPort = 8443;
+  uint16_t hostPort = 80;
   out->SetStringPiece(kASAD, getHostLocalIP().append(reinterpret_cast<const char*>(&hostPort), sizeof(hostPort)));
   if (replay_protection_) {
     out->SetStringPiece(kServerNonceTag, NewServerNonce(rand, info.now));
@@ -1902,8 +1902,9 @@ HandshakeFailureReason QuicCryptoServerConfig::ValidateSingleSourceAddressToken(
     const SourceAddressToken& source_address_token,
     const QuicIpAddress& ip,
     QuicWallTime now) const {
-  if (source_address_token.ip() != ip.DualStacked().ToPackedString()) {
+  if (false && (source_address_token.ip() != ip.DualStacked().ToPackedString())) {
     // It's for a different IP address.
+    DVLOG(1) << "IP addresses differ: " << source_address_token.ip() << " against " << ip.DualStacked().ToPackedString() << "(" << ip.DualStacked().ToString() << ")";
     return SOURCE_ADDRESS_TOKEN_DIFFERENT_IP_ADDRESS_FAILURE;
   }
 

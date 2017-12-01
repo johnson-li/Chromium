@@ -83,6 +83,7 @@ WriteResult QuicChromiumPacketWriter::WritePacket(
     const QuicIpAddress& self_address,
     const QuicSocketAddress& peer_address,
     PerPacketOptions* /*options*/) {
+  DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
   DCHECK(!IsWriteBlocked());
   SetPacket(buffer, buf_len);
   return WritePacketToSocketImpl();
@@ -97,6 +98,11 @@ WriteResult QuicChromiumPacketWriter::WritePacketToSocket(
 WriteResult QuicChromiumPacketWriter::WritePacketToSocketImpl() {
   base::TimeTicks now = base::TimeTicks::Now();
   int rv = socket_->Write(packet_.get(), packet_->size(), write_callback_);
+  IPEndPoint peerAddress;
+  IPEndPoint localAddress;
+  socket_->GetPeerAddress(&peerAddress);
+  socket_->GetLocalAddress(&localAddress);
+  DVLOG(1) << "Socket write to: " << peerAddress.ToString() << ", from: " << localAddress.ToString();
 
   if (rv < 0 && rv != ERR_IO_PENDING && delegate_ != nullptr) {
     // If write error, then call delegate's HandleWriteError, which

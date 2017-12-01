@@ -31,6 +31,7 @@
 #include "net/quic/core/quic_blocked_writer_interface.h"
 #include "net/quic/core/quic_connection_stats.h"
 #include "net/quic/core/quic_framer.h"
+#include "net/quic/core/quic_migration_listener.h"
 #include "net/quic/core/quic_one_block_arena.h"
 #include "net/quic/core/quic_packet_creator.h"
 #include "net/quic/core/quic_packet_generator.h"
@@ -320,6 +321,15 @@ class QUIC_EXPORT_PRIVATE QuicConnection
                  bool owns_writer,
                  Perspective perspective,
                  const QuicTransportVersionVector& supported_versions);
+    QuicConnection(QuicConnectionId connection_id,
+                 QuicSocketAddress address,
+                 QuicConnectionHelperInterface* helper,
+                 QuicAlarmFactory* alarm_factory,
+                 QuicPacketWriter* writer,
+                 bool owns_writer,
+                 Perspective perspective,
+                 const QuicTransportVersionVector& supported_versions,
+                 QuicMigrationListener* migration_listener);
   ~QuicConnection() override;
 
   // Sets connection parameters from the supplied |config|.
@@ -889,6 +899,7 @@ class QUIC_EXPORT_PRIVATE QuicConnection
   // client.
   QuicSocketAddress self_address_;
   QuicSocketAddress peer_address_;
+  QuicMigrationListener* migration_listener_;
 
   // Records change type when the peer initiates migration to a new peer
   // address. Reset to NO_CHANGE after peer migration is validated.

@@ -25,8 +25,7 @@ QuicCryptoHandshaker::~QuicCryptoHandshaker() {}
 
 void QuicCryptoHandshaker::SendHandshakeMessage(
     const CryptoHandshakeMessage& message) {
-  std::cout << ENDPOINT << "Sending "
-  //QUIC_DVLOG(1) << ENDPOINT << "Sending "
+  QUIC_DVLOG(1) << ENDPOINT << "Sending "
                 << message.DebugString(session()->perspective());
   session()->connection()->NeuterUnencryptedPackets();
   session()->OnCryptoHandshakeMessageSent(message);
