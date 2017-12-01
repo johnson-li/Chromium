@@ -25,13 +25,16 @@ QuicChromiumPacketReader::QuicChromiumPacketReader(
           socket2_(socket2),
           visitor_(visitor),
           read_pending_(false),
+          read_pending2_(false),
           num_packets_read_(0),
+          num_packets_read2_(0),
           clock_(clock),
           yield_after_packets_(yield_after_packets),
           yield_after_duration_(yield_after_duration),
           yield_after_(QuicTime::Infinite()),
           yield_after2_(QuicTime::Infinite()),
           read_buffer_(new IOBufferWithSize(static_cast<size_t>(kMaxPacketSize))),
+          read_buffer2_(new IOBufferWithSize(static_cast<size_t>(kMaxPacketSize))),
           net_log_(net_log),
           weak_factory_(this) {}
 
@@ -46,13 +49,16 @@ QuicChromiumPacketReader::QuicChromiumPacketReader(
       socket2_(nullptr),
       visitor_(visitor),
       read_pending_(false),
+      read_pending2_(false),
       num_packets_read_(0),
+      num_packets_read2_(0),
       clock_(clock),
       yield_after_packets_(yield_after_packets),
       yield_after_duration_(yield_after_duration),
       yield_after_(QuicTime::Infinite()),
       yield_after2_(QuicTime::Infinite()),
       read_buffer_(new IOBufferWithSize(static_cast<size_t>(kMaxPacketSize))),
+      read_buffer2_(new IOBufferWithSize(static_cast<size_t>(kMaxPacketSize))),
       net_log_(net_log),
       weak_factory_(this) {}
 
@@ -157,7 +163,7 @@ bool QuicChromiumPacketReader::ProcessReadResult(int result) {
 
 bool QuicChromiumPacketReader::ProcessReadResult2(int result) {
   DVLOG(1) << "ProcessReadResult2";
-  read_pending_ = false;
+  read_pending2_ = false;
   if (result == 0)
     result = ERR_CONNECTION_CLOSED;
 
@@ -167,7 +173,7 @@ bool QuicChromiumPacketReader::ProcessReadResult2(int result) {
     return false;
   }
 
-  QuicReceivedPacket packet(read_buffer_->data(), result, clock_->Now());
+  QuicReceivedPacket packet(read_buffer2_->data(), result, clock_->Now());
   IPEndPoint local_address;
   IPEndPoint peer_address;
   socket_->GetLocalAddress(&local_address);
