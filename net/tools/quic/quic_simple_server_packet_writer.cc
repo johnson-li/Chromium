@@ -76,18 +76,24 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket(
   DCHECK(!IsWriteBlocked());
   DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
   int rv;
+  int rv2;
   if (buf_len <= static_cast<size_t>(std::numeric_limits<int>::max())) {
+    IPEndPoint socket_address2(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
     rv = socket_->SendTo(
         buf.get(), static_cast<int>(buf_len),
         peer_address.impl().socket_address(),
         base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
                    weak_factory_.GetWeakPtr()));
+    rv2 = socket_->SendTo(
+            buf.get(), static_cast<int>(buf_len), socket_address2,
+            base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
+                       weak_factory_.GetWeakPtr()));
   } else {
     rv = ERR_MSG_TOO_BIG;
   }
   WriteStatus status = WRITE_STATUS_OK;
   if (rv < 0) {
-    if (rv != ERR_IO_PENDING) {
+    if (rv != ERR_IO_PENDING || rv2 != ERR_IO_PENDING) {
       UMA_HISTOGRAM_SPARSE_SLOWLY("Net.QuicSession.WriteError", -rv);
       status = WRITE_STATUS_ERROR;
     } else {

@@ -12,6 +12,7 @@
 
 #include <memory>
 #include <string>
+#include <net/socket/udp_server_socket.h>
 
 #include "base/command_line.h"
 #include "base/macros.h"
@@ -65,6 +66,7 @@ class QuicClientMessageLooplNetworkHelper
 
   // UDP socket connected to the server.
   std::unique_ptr<UDPClientSocket> socket_;
+  std::unique_ptr<UDPServerSocket> socket2_;
 
   // The log used for the sockets.
   NetLog net_log_;

@@ -14,6 +14,28 @@
 namespace net {
 
 QuicChromiumPacketReader::QuicChromiumPacketReader(
+        DatagramClientSocket* socket,
+        DatagramServerSocket* socket2,
+        QuicClock* clock,
+        Visitor* visitor,
+        int yield_after_packets,
+        QuicTime::Delta yield_after_duration,
+        const NetLogWithSource& net_log)
+        : socket_(socket),
+          socket2_(socket2),
+          visitor_(visitor),
+          read_pending_(false),
+          num_packets_read_(0),
+          clock_(clock),
+          yield_after_packets_(yield_after_packets),
+          yield_after_duration_(yield_after_duration),
+          yield_after_(QuicTime::Infinite()),
+          yield_after2_(QuicTime::Infinite()),
+          read_buffer_(new IOBufferWithSize(static_cast<size_t>(kMaxPacketSize))),
+          net_log_(net_log),
+          weak_factory_(this) {}
+
+QuicChromiumPacketReader::QuicChromiumPacketReader(
     DatagramClientSocket* socket,
     QuicClock* clock,
     Visitor* visitor,
@@ -21,6 +43,7 @@ QuicChromiumPacketReader::QuicChromiumPacketReader(
     QuicTime::Delta yield_after_duration,
     const NetLogWithSource& net_log)
     : socket_(socket),
+      socket2_(nullptr),
       visitor_(visitor),
       read_pending_(false),
       num_packets_read_(0),
@@ -28,6 +51,7 @@ QuicChromiumPacketReader::QuicChromiumPacketReader(
       yield_after_packets_(yield_after_packets),
       yield_after_duration_(yield_after_duration),
       yield_after_(QuicTime::Infinite()),
+      yield_after2_(QuicTime::Infinite()),
       read_buffer_(new IOBufferWithSize(static_cast<size_t>(kMaxPacketSize))),
       net_log_(net_log),
       weak_factory_(this) {}
@@ -37,7 +61,7 @@ QuicChromiumPacketReader::~QuicChromiumPacketReader() {}
 void QuicChromiumPacketReader::StartReading() {
   for (;;) {
     if (read_pending_)
-      return;
+        break;
 
     if (num_packets_read_ == 0)
       yield_after_ = clock_->Now() + yield_after_duration_;
@@ -50,7 +74,7 @@ void QuicChromiumPacketReader::StartReading() {
     UMA_HISTOGRAM_BOOLEAN("Net.QuicSession.AsyncRead", rv == ERR_IO_PENDING);
     if (rv == ERR_IO_PENDING) {
       num_packets_read_ = 0;
-      return;
+      break;
     }
 
     if (++num_packets_read_ > yield_after_packets_ ||
@@ -64,7 +88,42 @@ void QuicChromiumPacketReader::StartReading() {
                                 weak_factory_.GetWeakPtr(), rv));
     } else {
       if (!ProcessReadResult(rv)) {
-        return;
+        break;
+      }
+    }
+  }
+
+  for (;;) {
+    if (read_pending2_)
+      break;
+
+    if (num_packets_read2_ == 0)
+      yield_after2_ = clock_->Now() + yield_after_duration_;
+
+    DCHECK(socket2_);
+    read_pending2_ = true;
+    IPEndPoint ca;
+    int rv = socket2_->RecvFrom(read_buffer2_.get(), read_buffer2_->size(), &ca,
+                           base::Bind(&QuicChromiumPacketReader::OnReadComplete2,
+                                      weak_factory_.GetWeakPtr()));
+    UMA_HISTOGRAM_BOOLEAN("Net.QuicSession.AsyncRead", rv == ERR_IO_PENDING);
+    if (rv == ERR_IO_PENDING) {
+      num_packets_read2_ = 0;
+      break;
+    }
+
+    if (++num_packets_read2_ > yield_after_packets_ ||
+        clock_->Now() > yield_after2_) {
+      num_packets_read2_ = 0;
+      // Data was read, process it.
+      // Schedule the work through the message loop to 1) prevent infinite
+      // recursion and 2) avoid blocking the thread for too long.
+      base::ThreadTaskRunnerHandle::Get()->PostTask(
+              FROM_HERE, base::Bind(&QuicChromiumPacketReader::OnReadComplete2,
+                                    weak_factory_.GetWeakPtr(), rv));
+    } else {
+      if (!ProcessReadResult2(rv)) {
+        break;
       }
     }
   }
@@ -95,8 +154,35 @@ bool QuicChromiumPacketReader::ProcessReadResult(int result) {
       QuicSocketAddress(QuicSocketAddressImpl(peer_address)));
 }
 
+bool QuicChromiumPacketReader::ProcessReadResult2(int result) {
+  read_pending_ = false;
+  if (result == 0)
+    result = ERR_CONNECTION_CLOSED;
+
+  if (result < 0) {
+//    visitor_->OnReadError(result, socket2_);
+    DVLOG(1) << "Socket 2 read error";
+    return false;
+  }
+
+  QuicReceivedPacket packet(read_buffer_->data(), result, clock_->Now());
+  IPEndPoint local_address;
+  IPEndPoint peer_address;
+  socket_->GetLocalAddress(&local_address);
+  socket_->GetPeerAddress(&peer_address);
+  return visitor_->OnPacket(
+          packet, QuicSocketAddress(QuicSocketAddressImpl(local_address)),
+          QuicSocketAddress(QuicSocketAddressImpl(peer_address)));
+}
+
 void QuicChromiumPacketReader::OnReadComplete(int result) {
   if (ProcessReadResult(result)) {
+    StartReading();
+  }
+}
+
+void QuicChromiumPacketReader::OnReadComplete2(int result) {
+  if (ProcessReadResult2(result)) {
     StartReading();
   }
 }

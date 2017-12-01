@@ -6,6 +6,7 @@
 #ifndef NET_QUIC_CHROMIUM_QUIC_CHROMIUM_PACKET_READER_H_
 #define NET_QUIC_CHROMIUM_QUIC_CHROMIUM_PACKET_READER_H_
 
+#include <net/socket/datagram_server_socket.h>
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "net/base/io_buffer.h"
@@ -38,6 +39,14 @@ class NET_EXPORT_PRIVATE QuicChromiumPacketReader {
   };
 
   QuicChromiumPacketReader(DatagramClientSocket* socket,
+                           DatagramServerSocket* socket2,
+                           QuicClock* clock,
+                           Visitor* visitor,
+                           int yield_after_packets,
+                           QuicTime::Delta yield_after_duration,
+                           const NetLogWithSource& net_log);
+
+  QuicChromiumPacketReader(DatagramClientSocket* socket,
                            QuicClock* clock,
                            Visitor* visitor,
                            int yield_after_packets,
@@ -55,18 +64,25 @@ class NET_EXPORT_PRIVATE QuicChromiumPacketReader {
  private:
   // A completion callback invoked when a read completes.
   void OnReadComplete(int result);
+  void OnReadComplete2(int result);
   // Return true if reading should continue.
   bool ProcessReadResult(int result);
+  bool ProcessReadResult2(int result);
 
   DatagramClientSocket* socket_;
+  DatagramServerSocket* socket2_;
   Visitor* visitor_;
   bool read_pending_;
+  bool read_pending2_;
   int num_packets_read_;
+  int num_packets_read2_;
   QuicClock* clock_;  // Owned by QuicStreamFactory
   int yield_after_packets_;
   QuicTime::Delta yield_after_duration_;
   QuicTime yield_after_;
+  QuicTime yield_after2_;
   scoped_refptr<IOBufferWithSize> read_buffer_;
+  scoped_refptr<IOBufferWithSize> read_buffer2_;
   NetLogWithSource net_log_;
 
   base::WeakPtrFactory<QuicChromiumPacketReader> weak_factory_;

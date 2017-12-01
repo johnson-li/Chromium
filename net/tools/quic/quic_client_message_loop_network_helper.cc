@@ -5,6 +5,7 @@
 #include "net/tools/quic/quic_client_message_loop_network_helper.h"
 
 #include <utility>
+#include <net/socket/udp_server_socket.h>
 
 #include "base/logging.h"
 #include "base/run_loop.h"
@@ -57,9 +58,12 @@ bool QuicClientMessageLooplNetworkHelper::CreateUDPSocketAndBind(
   }
 
   int rc = socket->Connect(server_address.impl().socket_address());
-  if (rc != OK) {
-    LOG(ERROR) << "Connect failed: " << ErrorToShortString(rc);
-    return false;
+
+  rc = socket->SetReceiveBufferSize(
+          static_cast<int32_t>(kDefaultSocketReceiveBuffer));
+  if (rc < 0) {
+    LOG(ERROR) << "SetReceiveBufferSize() failed: " << ErrorToString(rc);
+    return rc;
   }
 
   rc = socket->SetReceiveBufferSize(kDefaultSocketReceiveBuffer);
@@ -82,14 +86,49 @@ bool QuicClientMessageLooplNetworkHelper::CreateUDPSocketAndBind(
   }
   client_address_ = QuicSocketAddress(QuicSocketAddressImpl(address));
 
+  std::unique_ptr<UDPServerSocket> socket2(new UDPServerSocket(&net_log_, NetLogSource()));
+  socket2->AllowAddressReuse();
+
+  rc = socket2->Listen(net::IPEndPoint(net::IPAddress::IPv6AllZeros(), bind_to_port + 1));
+  if (rc < 0) {
+    LOG(ERROR) << "Listen() failed: " << ErrorToString(rc);
+    return rc;
+  }
+
+  rc = socket->SetReceiveBufferSize(
+          static_cast<int32_t>(kDefaultSocketReceiveBuffer));
+  if (rc < 0) {
+    LOG(ERROR) << "SetReceiveBufferSize() failed: " << ErrorToString(rc);
+    return rc;
+  }
+
+  rc = socket->SetSendBufferSize(20 * kMaxPacketSize);
+  if (rc < 0) {
+    LOG(ERROR) << "SetSendBufferSize() failed: " << ErrorToString(rc);
+    return rc;
+  }
+
+  IPEndPoint sa;
+  rc = socket->GetLocalAddress(&sa);
+  if (rc < 0) {
+    LOG(ERROR) << "GetLocalAddress() failed: " << ErrorToString(rc);
+    return rc;
+  }
+  DVLOG(1) << "Listening on " << sa.ToString();
+
   socket_.swap(socket);
+  socket2_.swap(socket2);
+
   packet_reader_.reset(new QuicChromiumPacketReader(
-      socket_.get(), clock_, this, kQuicYieldAfterPacketsRead,
-      QuicTime::Delta::FromMilliseconds(kQuicYieldAfterDurationMilliseconds),
-      NetLogWithSource()));
+          socket_.get(), socket2_.get(), clock_, this, kQuicYieldAfterPacketsRead,
+          QuicTime::Delta::FromMilliseconds(kQuicYieldAfterDurationMilliseconds),
+          NetLogWithSource()));
 
   if (socket != nullptr) {
     socket->Close();
+  }
+  if (socket2 != nullptr) {
+    socket2->Close();
   }
 
   return true;

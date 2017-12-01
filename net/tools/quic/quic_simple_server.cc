@@ -116,13 +116,14 @@ int QuicSimpleServer::Listen(const IPEndPoint& address) {
     return rc;
   }
 
-  rc = socket->GetLocalAddress(&server_address_);
+  IPEndPoint server_address;
+  rc = socket->GetLocalAddress(&server_address);
   if (rc < 0) {
     LOG(ERROR) << "GetLocalAddress() failed: " << ErrorToString(rc);
     return rc;
   }
 
-  DVLOG(1) << "Listening on " << server_address_.ToString();
+  DVLOG(1) << "Listening on " << server_address.ToString();
 
   socket_.swap(socket);
 
