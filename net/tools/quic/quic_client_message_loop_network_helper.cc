@@ -89,27 +89,27 @@ bool QuicClientMessageLooplNetworkHelper::CreateUDPSocketAndBind(
   std::unique_ptr<UDPServerSocket> socket2(new UDPServerSocket(&net_log_, NetLogSource()));
   socket2->AllowAddressReuse();
 
-  rc = socket2->Listen(net::IPEndPoint(net::IPAddress::IPv6AllZeros(), bind_to_port + 1));
+  rc = socket2->Listen(net::IPEndPoint(net::IPAddress::IPv6AllZeros(), 5678));
   if (rc < 0) {
     LOG(ERROR) << "Listen() failed: " << ErrorToString(rc);
     return rc;
   }
 
-  rc = socket->SetReceiveBufferSize(
+  rc = socket2->SetReceiveBufferSize(
           static_cast<int32_t>(kDefaultSocketReceiveBuffer));
   if (rc < 0) {
     LOG(ERROR) << "SetReceiveBufferSize() failed: " << ErrorToString(rc);
     return rc;
   }
 
-  rc = socket->SetSendBufferSize(20 * kMaxPacketSize);
+  rc = socket2->SetSendBufferSize(20 * kMaxPacketSize);
   if (rc < 0) {
     LOG(ERROR) << "SetSendBufferSize() failed: " << ErrorToString(rc);
     return rc;
   }
 
   IPEndPoint sa;
-  rc = socket->GetLocalAddress(&sa);
+  rc = socket2->GetLocalAddress(&sa);
   if (rc < 0) {
     LOG(ERROR) << "GetLocalAddress() failed: " << ErrorToString(rc);
     return rc;

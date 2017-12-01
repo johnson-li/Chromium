@@ -94,6 +94,7 @@ void QuicChromiumPacketReader::StartReading() {
   }
 
   for (;;) {
+    DVLOG(1) << "Start reading on socket2";
     if (read_pending2_)
       break;
 
@@ -155,6 +156,7 @@ bool QuicChromiumPacketReader::ProcessReadResult(int result) {
 }
 
 bool QuicChromiumPacketReader::ProcessReadResult2(int result) {
+  DVLOG(1) << "ProcessReadResult2";
   read_pending_ = false;
   if (result == 0)
     result = ERR_CONNECTION_CLOSED;
@@ -182,6 +184,7 @@ void QuicChromiumPacketReader::OnReadComplete(int result) {
 }
 
 void QuicChromiumPacketReader::OnReadComplete2(int result) {
+  DVLOG(1) << "OnReadComplete2";
   if (ProcessReadResult2(result)) {
     StartReading();
   }
