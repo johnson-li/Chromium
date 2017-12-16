@@ -89,7 +89,7 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket(
   std::unique_ptr<UDPClientSocket> socket2(
     new UDPClientSocket(DatagramSocket::DEFAULT_BIND, RandIntCallback(),
       &net_log, NetLogSource()));
-  IPEndPoint sa(peer_address.impl().socket_address().address(), 5678);
+  IPEndPoint sa(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
   socket2->Connect(sa);
   DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << sa.ToString();
   socket2->SetReceiveBufferSize(

@@ -41,7 +41,7 @@ QuicClientMessageLooplNetworkHelper::QuicClientMessageLooplNetworkHelper(
 
 QuicClientMessageLooplNetworkHelper::~QuicClientMessageLooplNetworkHelper() {}
 
-bool QuicClientMessageLooplNetworkHelper::CreateUDPSocketAndBind(
+bool QuicClientMessageLooplNetworkHelper::CreateUDPSocketAndBind( //call in initialized step
     QuicSocketAddress server_address,
     QuicIpAddress bind_to_address,
     int bind_to_port) {
@@ -89,7 +89,7 @@ bool QuicClientMessageLooplNetworkHelper::CreateUDPSocketAndBind(
   std::unique_ptr<UDPServerSocket> socket2(new UDPServerSocket(&net_log_, NetLogSource()));
   socket2->AllowAddressReuse();
 
-  rc = socket2->Listen(net::IPEndPoint(net::IPAddress::IPv6AllZeros(), 5678));
+  rc = socket2->Listen(net::IPEndPoint(net::IPAddress::IPv6AllZeros(), client_address_.port()+1));
   if (rc < 0) {
     LOG(ERROR) << "Listen() failed: " << ErrorToString(rc);
     return rc;
@@ -147,7 +147,7 @@ void QuicClientMessageLooplNetworkHelper::StartPacketReaderIfNotStarted() {
   }
 }
 
-void QuicClientMessageLooplNetworkHelper::RunEventLoop() {
+void QuicClientMessageLooplNetworkHelper::RunEventLoop() { //cal in connect step
   StartPacketReaderIfNotStarted();
   base::RunLoop().RunUntilIdle();
 }

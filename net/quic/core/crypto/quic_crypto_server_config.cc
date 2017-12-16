@@ -104,7 +104,8 @@ std::string getHostLocalIP() {
         {   
             //char addressBuffer[INET6_ADDRSTRLEN];
             //inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-            if ((std::string(ifAddrStruct->ifa_name) == "eth0") || (std::string(ifAddrStruct->ifa_name) == "en0")) {
+            if ((std::string(ifAddrStruct->ifa_name) == "eth0") || (std::string(ifAddrStruct->ifa_name) == "en0") || (std::string(ifAddrStruct->ifa_name) == "ens35"))
+            {
                 tmpAddrPtr=reinterpret_cast<uint8_t*>(&((struct sockaddr_in6 *)ifAddrStruct->ifa_addr)->sin6_addr);
                 IPAddress hostIP = IPAddress(tmpAddrPtr[0], tmpAddrPtr[1], tmpAddrPtr[2], tmpAddrPtr[3], tmpAddrPtr[4], tmpAddrPtr[5],
                   tmpAddrPtr[6], tmpAddrPtr[7], tmpAddrPtr[8], tmpAddrPtr[9], tmpAddrPtr[10], tmpAddrPtr[11], tmpAddrPtr[12],
