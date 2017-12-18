@@ -117,6 +117,13 @@ class DummyPacketWriter : public QuicPacketWriter {
     DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
     return WriteResult(WRITE_STATUS_ERROR, 0);
   }
+  WriteResult WritePacket2(const char* buffer,
+                          size_t buf_len,
+                          const QuicIpAddress& self_address,
+                          const QuicSocketAddress& peer_address,
+                          PerPacketOptions* options, bool create_new) override {
+    return WritePacket(buffer, buf_len, self_address, peer_address, options);
+  }
 
   bool IsWriteBlockedDataBuffered() const override { return false; }
 

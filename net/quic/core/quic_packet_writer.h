@@ -49,6 +49,12 @@ class QUIC_EXPORT_PRIVATE QuicPacketWriter {
                                   const QuicSocketAddress& peer_address,
                                   PerPacketOptions* options) = 0;
 
+  virtual WriteResult WritePacket2(const char* buffer,
+                                  size_t buf_len,
+                                  const QuicIpAddress& self_address,
+                                  const QuicSocketAddress& peer_address,
+                                  PerPacketOptions* options, bool create_new) = 0;
+
   // Returns true if the writer buffers and subsequently rewrites data
   // when an attempt to write results in the underlying socket becoming
   // write blocked.

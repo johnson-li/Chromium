@@ -66,18 +66,29 @@ void QuicSimpleServerPacketWriter::SetWritable() {
   write_blocked_ = false;
 }
 
+
 WriteResult QuicSimpleServerPacketWriter::WritePacket(
+        const char* buffer,
+        size_t buf_len,
+        const QuicIpAddress& self_address,
+        const QuicSocketAddress& peer_address,
+        PerPacketOptions* options) {
+  return WritePacket2(buffer, buf_len, self_address, peer_address, options, false);
+}
+
+WriteResult QuicSimpleServerPacketWriter::WritePacket2(
     const char* buffer,
     size_t buf_len,
     const QuicIpAddress& self_address,
     const QuicSocketAddress& peer_address,
-    PerPacketOptions* options) {
+    PerPacketOptions* options, bool create_new) {
   scoped_refptr<StringIOBuffer> buf(
       new StringIOBuffer(std::string(buffer, buf_len)));
   DCHECK(!IsWriteBlocked());
   int rv;
   if (buf_len <= static_cast<size_t>(std::numeric_limits<int>::max())) {
-    if (options == nullptr) {
+    DVLOG(1) << "peer address is initialized: " << peer_address.IsInitialized();
+    if (!create_new) {
       rv = socket_->SendTo(
         buf.get(), static_cast<int>(buf_len),
         peer_address.impl().socket_address(),

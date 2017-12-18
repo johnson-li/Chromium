@@ -1613,15 +1613,16 @@ bool QuicConnection::WritePacket(SerializedPacket* packet) {
   // during the WritePacket below.
   QuicTime packet_send_time = clock_->Now();
   DVLOG(1) << ENDPOINT << "Write to: " << peer_address().ToString();
+  WriteResult result;
   if (late_bound()) {
-    WriteResult result = writer_->WritePacket(
+    result = writer_->WritePacket2(
             packet->encrypted_buffer, encrypted_length, self_address().host(),
-            peer_address_, nullptr);
+            peer_address_, per_packet_options_, false);
   } else {
     PerPacketOptions tmp;
-    WriteResult result = writer_->WritePacket(
+    result = writer_->WritePacket2(
             packet->encrypted_buffer, encrypted_length, self_address().host(),
-            peer_address(), &tmp);
+            peer_address(), &tmp, true);
   }
   if (result.error_code == ERR_IO_PENDING) {
     DCHECK_EQ(WRITE_STATUS_BLOCKED, result.status);

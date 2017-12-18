@@ -170,7 +170,14 @@ QuicEndpoint::Writer::Writer(QuicEndpoint* endpoint)
     : endpoint_(endpoint), is_blocked_(false) {}
 
 QuicEndpoint::Writer::~Writer() {}
-
+WriteResult QuicEndpoint::Writer::WritePacket2(
+    const char* buffer,
+    size_t buf_len,
+    const QuicIpAddress& self_address,
+    const QuicSocketAddress& peer_address,
+    PerPacketOptions* options, bool create_new) {
+    return WritePacket(buffer, buf_len, self_address, peer_address, options);
+}
 WriteResult QuicEndpoint::Writer::WritePacket(
     const char* buffer,
     size_t buf_len,

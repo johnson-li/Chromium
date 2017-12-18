@@ -11,6 +11,15 @@ QuartcPacketWriter::QuartcPacketWriter(
     QuicByteCount max_packet_size)
     : packet_transport_(packet_transport), max_packet_size_(max_packet_size) {}
 
+WriteResult QuartcPacketWriter::WritePacket2(
+        const char* buffer,
+        size_t buf_len,
+        const QuicIpAddress& self_address,
+        const QuicSocketAddress& peer_address,
+        PerPacketOptions* options, bool create_new) {
+  return WritePacket(buffer, buf_len, self_address, peer_address, options);
+}
+
 WriteResult QuartcPacketWriter::WritePacket(
     const char* buffer,
     size_t buf_len,

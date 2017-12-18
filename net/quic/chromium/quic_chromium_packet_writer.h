@@ -81,6 +81,11 @@ class NET_EXPORT_PRIVATE QuicChromiumPacketWriter : public QuicPacketWriter {
                           const QuicIpAddress& self_address,
                           const QuicSocketAddress& peer_address,
                           PerPacketOptions* options) override;
+  WriteResult WritePacket2(const char* buffer,
+                          size_t buf_len,
+                          const QuicIpAddress& self_address,
+                          const QuicSocketAddress& peer_address,
+                          PerPacketOptions* options, bool create_new) override;
   bool IsWriteBlockedDataBuffered() const override;
   bool IsWriteBlocked() const override;
   void SetWritable() override;
