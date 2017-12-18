@@ -221,6 +221,7 @@ void QuicCryptoServerHandshaker::
 
   config->ToHandshakeMessage(reply.get());
 
+  session()->connection()->set_late_bound(true);
   // Receiving a full CHLO implies the client is prepared to decrypt with
   // the new server write key.  We can start to encrypt with the new server
   // write key.

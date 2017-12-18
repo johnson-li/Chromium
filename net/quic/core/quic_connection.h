@@ -531,6 +531,14 @@ class QUIC_EXPORT_PRIVATE QuicConnection
 
   bool connected() const { return connected_; }
 
+  bool late_bound() const {
+    return late_bound_;
+  }
+
+  void set_late_bound(bool late_bound) {
+    late_bound_ = late_bound;
+  }
+
   bool goaway_sent() const { return goaway_sent_; }
 
   bool goaway_received() const { return goaway_received_; }
@@ -1079,6 +1087,8 @@ class QUIC_EXPORT_PRIVATE QuicConnection
   // True by default.  False if we've received or sent an explicit connection
   // close.
   bool connected_;
+
+  bool late_bound_;
 
   // Destination address of the last received packet.
   QuicSocketAddress last_packet_destination_address_;

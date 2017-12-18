@@ -282,6 +282,7 @@ QuicConnection::QuicConnection(
       perspective_(perspective),
       disable_migration_(false),
       connected_(true),
+      late_bound_(false),
       can_truncate_connection_ids_(true),
       mtu_discovery_target_(0),
       mtu_probe_count_(0),
@@ -1612,9 +1613,16 @@ bool QuicConnection::WritePacket(SerializedPacket* packet) {
   // during the WritePacket below.
   QuicTime packet_send_time = clock_->Now();
   DVLOG(1) << ENDPOINT << "Write to: " << peer_address().ToString();
-  WriteResult result = writer_->WritePacket(
-      packet->encrypted_buffer, encrypted_length, self_address().host(),
-      peer_address(), per_packet_options_);
+  if (late_bound()) {
+    WriteResult result = writer_->WritePacket(
+            packet->encrypted_buffer, encrypted_length, self_address().host(),
+            peer_address_, nullptr);
+  } else {
+    PerPacketOptions tmp;
+    WriteResult result = writer_->WritePacket(
+            packet->encrypted_buffer, encrypted_length, self_address().host(),
+            peer_address(), &tmp);
+  }
   if (result.error_code == ERR_IO_PENDING) {
     DCHECK_EQ(WRITE_STATUS_BLOCKED, result.status);
   }

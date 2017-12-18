@@ -75,35 +75,31 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket(
   scoped_refptr<StringIOBuffer> buf(
       new StringIOBuffer(std::string(buffer, buf_len)));
   DCHECK(!IsWriteBlocked());
-  //DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << peer_address.ToString();
   int rv;
-  //int rv2;
   if (buf_len <= static_cast<size_t>(std::numeric_limits<int>::max())) {
-    IPEndPoint socket_address2(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
-    /*rv = socket_->SendTo(
+    if (options == nullptr) {
+      rv = socket_->SendTo(
         buf.get(), static_cast<int>(buf_len),
         peer_address.impl().socket_address(),
         base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
-                   weak_factory_.GetWeakPtr()));*/
-  NetLog net_log;
-  std::unique_ptr<UDPClientSocket> socket2(
-    new UDPClientSocket(DatagramSocket::DEFAULT_BIND, RandIntCallback(),
-      &net_log, NetLogSource()));
-  IPEndPoint sa(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
-  socket2->Connect(sa);
-  DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << sa.ToString();
-  socket2->SetReceiveBufferSize(
-    static_cast<int32_t>(kDefaultSocketReceiveBuffer));
-  socket2->SetReceiveBufferSize(kDefaultSocketReceiveBuffer);
-  socket2->SetSendBufferSize(kDefaultSocketReceiveBuffer);
-  rv = socket2->Write(
-  buf.get(), static_cast<int>(buf_len),
-    base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
-    weak_factory_.GetWeakPtr()));
-    /*rv = socket_->SendTo(
-            buf.get(), static_cast<int>(buf_len), socket_address2,
-            base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
-                       weak_factory_.GetWeakPtr()));*/
+                   weak_factory_.GetWeakPtr()));
+    } else {
+      IPEndPoint socket_address2(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
+      NetLog net_log;
+      std::unique_ptr<UDPClientSocket> socket2(
+      new UDPClientSocket(DatagramSocket::DEFAULT_BIND, RandIntCallback(),
+                          &net_log, NetLogSource()));
+      IPEndPoint sa(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
+      socket2->Connect(sa);
+      DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << sa.ToString();
+      socket2->SetReceiveBufferSize(static_cast<int32_t>(kDefaultSocketReceiveBuffer));
+      socket2->SetReceiveBufferSize(kDefaultSocketReceiveBuffer);
+      socket2->SetSendBufferSize(kDefaultSocketReceiveBuffer);
+      rv = socket2->Write(
+              buf.get(), static_cast<int>(buf_len),
+              base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
+                         weak_factory_.GetWeakPtr()));
+    }
   } else {
     rv = ERR_MSG_TOO_BIG;
   }
