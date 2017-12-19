@@ -96,8 +96,9 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket2(
         base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
                    weak_factory_.GetWeakPtr()));
     } else {
-      NetLog net_log;
       if (!socket2_) {
+        DVLOG(1) << "init socket2";
+        NetLog net_log;
         socket2_ = new UDPClientSocket(DatagramSocket::DEFAULT_BIND, RandIntCallback(), &net_log, NetLogSource());
         IPEndPoint sa(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
         socket2_->Connect(sa);
