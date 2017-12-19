@@ -20,6 +20,7 @@ QuicSimpleServerPacketWriter::QuicSimpleServerPacketWriter(
     UDPServerSocket* socket,
     QuicDispatcher* dispatcher)
     : socket_(socket),
+      socket2_(nullptr),
       dispatcher_(dispatcher),
       write_blocked_(false),
       weak_factory_(this) {}
@@ -87,7 +88,7 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket2(
   DCHECK(!IsWriteBlocked());
   int rv;
   if (buf_len <= static_cast<size_t>(std::numeric_limits<int>::max())) {
-    DVLOG(1) << "peer address is initialized: " << peer_address.IsInitialized();
+    DVLOG(1) << "create new: " << create_new;
     if (!create_new) {
       rv = socket_->SendTo(
         buf.get(), static_cast<int>(buf_len),
@@ -95,18 +96,17 @@ WriteResult QuicSimpleServerPacketWriter::WritePacket2(
         base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
                    weak_factory_.GetWeakPtr()));
     } else {
-      IPEndPoint socket_address2(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
       NetLog net_log;
-      std::unique_ptr<UDPClientSocket> socket2(
-      new UDPClientSocket(DatagramSocket::DEFAULT_BIND, RandIntCallback(),
-                          &net_log, NetLogSource()));
-      IPEndPoint sa(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
-      socket2->Connect(sa);
-      DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << sa.ToString();
-      socket2->SetReceiveBufferSize(static_cast<int32_t>(kDefaultSocketReceiveBuffer));
-      socket2->SetReceiveBufferSize(kDefaultSocketReceiveBuffer);
-      socket2->SetSendBufferSize(kDefaultSocketReceiveBuffer);
-      rv = socket2->Write(
+      if (!socket2_) {
+        socket2_ = new UDPClientSocket(DatagramSocket::DEFAULT_BIND, RandIntCallback(), &net_log, NetLogSource());
+        IPEndPoint sa(peer_address.impl().socket_address().address(), peer_address.impl().port() + 1);
+        socket2_->Connect(sa);
+        DVLOG(1) << "Write packet from " << self_address.ToString() << " to " << sa.ToString();
+        socket2_->SetReceiveBufferSize(static_cast<int32_t>(kDefaultSocketReceiveBuffer));
+        socket2_->SetReceiveBufferSize(kDefaultSocketReceiveBuffer);
+        socket2_->SetSendBufferSize(kDefaultSocketReceiveBuffer);
+      }
+      rv = socket2_->Write(
               buf.get(), static_cast<int>(buf_len),
               base::Bind(&QuicSimpleServerPacketWriter::OnWriteComplete,
                          weak_factory_.GetWeakPtr()));

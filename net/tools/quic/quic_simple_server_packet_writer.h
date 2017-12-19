@@ -13,6 +13,7 @@
 #include "net/quic/core/quic_connection.h"
 #include "net/quic/core/quic_packet_writer.h"
 #include "net/quic/core/quic_packets.h"
+#include "net/socket/udp_client_socket.h"
 
 namespace net {
 
@@ -62,6 +63,7 @@ class QuicSimpleServerPacketWriter : public QuicPacketWriter {
 
  private:
   UDPServerSocket* socket_;
+  UDPClientSocket* socket2_;
 
   // To be notified after every successful asynchronous write.
   QuicDispatcher* dispatcher_;

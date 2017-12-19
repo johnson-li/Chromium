@@ -18,7 +18,7 @@ WriteResult QuicPerConnectionPacketWriter::WritePacket2(
         const QuicIpAddress& self_address,
         const QuicSocketAddress& peer_address,
         PerPacketOptions* options, bool create_new) {
-   return WritePacket(buffer, buf_len, self_address, peer_address, options);
+   return shared_writer_->WritePacket2(buffer, buf_len, self_address, peer_address, options, create_new);
 }
 
 WriteResult QuicPerConnectionPacketWriter::WritePacket(

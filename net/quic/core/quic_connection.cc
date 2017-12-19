@@ -1597,6 +1597,10 @@ bool QuicConnection::WritePacket(SerializedPacket* packet) {
 
   DCHECK_LE(encrypted_length, kMaxPacketSize);
   DCHECK_LE(encrypted_length, packet_generator_.GetCurrentMaxPacketLength());
+  if ((IsRetransmittable(*packet) != HAS_RETRANSMITTABLE_DATA)) {
+    DVLOG(1) << ENDPOINT << "set late bound";
+    set_late_bound(true);
+  }
   QUIC_DVLOG(1) << ENDPOINT << "Sending packet " << packet_number << " : "
                 << (IsRetransmittable(*packet) == HAS_RETRANSMITTABLE_DATA
                         ? "data bearing "
@@ -1619,10 +1623,9 @@ bool QuicConnection::WritePacket(SerializedPacket* packet) {
             packet->encrypted_buffer, encrypted_length, self_address().host(),
             peer_address_, per_packet_options_, false);
   } else {
-    PerPacketOptions tmp;
     result = writer_->WritePacket2(
             packet->encrypted_buffer, encrypted_length, self_address().host(),
-            peer_address(), &tmp, true);
+            peer_address(), per_packet_options_, true);
   }
   if (result.error_code == ERR_IO_PENDING) {
     DCHECK_EQ(WRITE_STATUS_BLOCKED, result.status);
